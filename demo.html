@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>airPark demo</title>
+<style>
+  :root { --brand:#0f766e; --brand-d:#115e59; --bg:#f1f5f9; --card:#fff; --muted:#64748b; --line:#e2e8f0; --warn:#b45309; --bad:#b91c1c; --ok:#15803d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,Segoe UI,Roboto,sans-serif; background:#cbd5e1; color:#0f172a; display:flex; gap:24px; justify-content:center; align-items:flex-start; padding:20px; min-height:100vh; }
+  .phone { width:390px; height:780px; background:var(--bg); border-radius:36px; border:10px solid #0f172a; overflow:hidden; display:flex; flex-direction:column; position:relative; box-shadow:0 20px 50px rgba(0,0,0,.3); }
+  .top { background:var(--brand); color:#fff; padding:14px 16px 10px; }
+  .top h1 { margin:0; font-size:19px; display:flex; justify-content:space-between; align-items:center; }
+  .role { display:flex; background:rgba(255,255,255,.2); border-radius:20px; padding:3px; margin-top:10px; }
+  .role button { flex:1; border:0; background:transparent; color:#fff; padding:6px; border-radius:16px; font-weight:600; cursor:pointer; }
+  .role button.on { background:#fff; color:var(--brand-d); }
+  .content { flex:1; overflow-y:auto; padding:14px; }
+  .nav { display:flex; border-top:1px solid var(--line); background:#fff; }
+  .nav button { flex:1; border:0; background:#fff; padding:10px 4px; font-size:12px; color:var(--muted); cursor:pointer; }
+  .nav button.on { color:var(--brand); font-weight:700; }
+  .card { background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .small { font-size:12px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; font-weight:600; }
+  input, select, textarea { width:100%; padding:9px; border:1px solid var(--line); border-radius:9px; font:inherit; background:#fff; }
+  .btn { background:var(--brand); color:#fff; border:0; border-radius:10px; padding:11px 14px; font-weight:700; cursor:pointer; width:100%; margin-top:10px; font-size:15px; }
+  .btn:hover { background:var(--brand-d); }
+  .btn.sec { background:#fff; color:var(--brand); border:1px solid var(--brand); }
+  .btn.bad { background:var(--bad); }
+  .btn.sm { width:auto; padding:6px 10px; font-size:13px; margin-top:6px; }
+  .btn:disabled { background:#94a3b8; cursor:not-allowed; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; background:#ccfbf1; color:var(--brand-d); }
+  .tag.warn { background:#fef3c7; color:var(--warn); }
+  .tag.bad { background:#fee2e2; color:var(--bad); }
+  .tag.ok { background:#dcfce7; color:var(--ok); }
+  .photo { height:90px; border-radius:10px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; font-size:38px; }
+  .map { position:relative; height:200px; border-radius:14px; overflow:hidden; margin-bottom:12px; border:1px solid var(--line);
+         background-color:#e8f0e6; background-image:linear-gradient(#fff9 2px,transparent 2px),linear-gradient(90deg,#fff9 2px,transparent 2px); background-size:40px 40px; }
+  .pin { position:absolute; transform:translate(-50%,-100%); background:var(--brand); color:#fff; font-size:11px; font-weight:700; padding:3px 7px; border-radius:10px; cursor:pointer; white-space:nowrap; border:2px solid #fff; }
+  .pin.dest { background:#dc2626; cursor:default; }
+  .pin.mine { background:#7c3aed; }
+  .line { display:flex; justify-content:space-between; padding:4px 0; font-size:14px; }
+  .line.total { border-top:1px solid var(--line); margin-top:4px; padding-top:8px; font-weight:800; font-size:16px; }
+  .secret { background:#ecfeff; border:1px dashed #0891b2; border-radius:10px; padding:10px; margin-top:8px; }
+  .days { display:flex; gap:4px; margin-top:4px; }
+  .days button { flex:1; padding:6px 0; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; font-size:12px; }
+  .days button.on { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .toast { position:absolute; left:14px; right:14px; bottom:64px; background:#0f172a; color:#fff; padding:10px 12px; border-radius:10px; font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  .side { width:330px; background:#fff; border-radius:16px; padding:16px; font-size:14px; line-height:1.45; box-shadow:0 4px 14px rgba(0,0,0,.12); }
+  .side h2 { margin:0 0 8px; font-size:17px; } .side h3 { margin:14px 0 4px; font-size:14px; }
+  .side ul { margin:4px 0; padding-left:18px; }
+  .side button { margin-top:6px; padding:6px 10px; border:1px solid var(--brand); background:#fff; color:var(--brand); border-radius:8px; cursor:pointer; }
+  @media (max-width:800px){ body { flex-direction:column; align-items:center; } .side { width:390px; } }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top">
+    <h1><span>🅿️ airPark</span><span class="small">Noida</span></h1>
+    <div class="role">
+      <button id="roleDriver" class="on">I'm a Driver</button>
+      <button id="roleHost">I'm a Host</button>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="nav" id="nav"></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="side">
+  <h2>Demo guide</h2>
+  <div class="muted">Mock data only. No real payments, OTP or maps.</div>
+  <h3>Try as a Driver</h3>
+  <ul>
+    <li>Search a destination and time window. Only Spaces free for the <b>whole</b> window and fitting your vehicle show up.</li>
+    <li>Open a Space, book it, enter a number plate and pay with mock UPI.</li>
+    <li>The exact address and access notes appear only after confirmation.</li>
+    <li>In My Bookings: cancel (see refund tier), simulate an Overstay, or report a blocked Space.</li>
+  </ul>
+  <h3>Try as a Host</h3>
+  <ul>
+    <li>Complete mock KYC, then add a Space.</li>
+    <li>Edit the weekly schedule and block dates.</li>
+    <li>See incoming Bookings (with number plates) and report an Overstay.</li>
+    <li>Payouts release 24h after a Booking ends, and are held during disputes.</li>
+  </ul>
+  <h3>Pricing rules</h3>
+  <ul>
+    <li>Host price = hourly rate, capped per day.</li>
+    <li>Service fee = 12% of Host price, plus 18% GST on the fee only.</li>
+    <li>Overstay = 1.5x hourly rate.</li>
+  </ul>
+  <button id="reset">Reset demo data</button>
+</div>
+
+<script>
+const H = 3600e3;
+const SIZE = ['Two-wheeler', 'Car', 'SUV'];
+const FEE = 0.12, GST = 0.18;
+const DESTS = {
+  s18:  { name: 'Sector 18 Market', x: 52, y: 45 },
+  stad: { name: 'Noida Stadium', x: 30, y: 30 },
+  bot:  { name: 'Botanical Garden Metro', x: 72, y: 62 },
+  mall: { name: 'DLF Mall of India', x: 48, y: 52 },
+  s62:  { name: 'Sector 62 Offices', x: 20, y: 70 },
+};
+const money = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const fmt = t => new Date(t).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const toLocalInput = t => { const d = new Date(t - new Date(t).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
+const GRAD = ['linear-gradient(135deg,#99f6e4,#5eead4)', 'linear-gradient(135deg,#fde68a,#fcd34d)', 'linear-gradient(135deg,#c7d2fe,#a5b4fc)', 'linear-gradient(135deg,#fecaca,#fca5a5)', 'linear-gradient(135deg,#bbf7d0,#86efac)'];
+
+function seed() {
+  const t0 = startOfToday();
+  const all = [0, 1, 2, 3, 4, 5, 6], wk = [1, 2, 3, 4, 5];
+  const spaces = [
+    { id: 1, name: 'Gated driveway, Sector 18', type: 'Driveway', host: 'Ritu S.', size: 2, rate: 40, cap: 250, x: 54, y: 42, area: 'Sector 18', rating: 4.8, reviews: 31, access: 'Blue gate near B-24. Call Host at arrival. Remote opens gate.', addr: 'B-24, Sector 18, Noida', days: all, from: 0, to: 24, blocks: [], emoji: '🏠' },
+    { id: 2, name: 'Office bay, weekends only', type: 'Business bay', host: 'Tandon Pvt Ltd', size: 1, rate: 30, cap: 180, x: 46, y: 55, area: 'Near Mall of India', rating: 4.6, reviews: 58, access: 'Show the booking at security. Bay 7, basement 1.', addr: 'Tower C basement, Sector 18', days: [0, 6], from: 0, to: 24, blocks: [], emoji: '🏢' },
+    { id: 3, name: 'Covered garage near stadium', type: 'Garage', host: 'Amit K.', size: 1, rate: 50, cap: 300, x: 31, y: 33, area: 'Sector 21A', rating: 4.9, reviews: 12, access: 'Green shutter. PIN 4821 on the keypad.', addr: 'H-12, Sector 21A, Noida', days: all, from: 6, to: 22, blocks: [], emoji: '🚗' },
+    { id: 4, name: 'Scooter spot by metro', type: 'Carport', host: 'Neha G.', size: 0, rate: 15, cap: 90, x: 70, y: 60, area: 'Botanical Garden', rating: 4.5, reviews: 20, access: 'Park left of the red pillar. Lock the handle.', addr: 'C-5, Sector 38, Noida', days: all, from: 0, to: 24, blocks: [], emoji: '🛵' },
+    { id: 5, name: 'Church lot, 6 bays', type: 'Church lot', host: 'St. Mary Parish', size: 2, rate: 25, cap: 150, x: 62, y: 52, area: 'Sector 26', rating: 4.3, reviews: 44, access: 'Enter from the side road. Ask the caretaker for bay.', addr: 'Sector 26, Noida', days: [1, 2, 3, 4, 5, 6], from: 8, to: 20, blocks: [], emoji: '⛪' },
+    { id: 6, name: 'Office tower visitor bay', type: 'Business bay', host: 'Sunrise Offices', size: 2, rate: 60, cap: 400, x: 22, y: 68, area: 'Sector 62', rating: 4.7, reviews: 25, access: 'Gate 2. Show plate to guard.', addr: 'Plot 14, Sector 62, Noida', days: wk, from: 7, to: 21, blocks: [], emoji: '🏙️' },
+    { id: 7, name: 'Your driveway (Sector 50)', type: 'Driveway', host: 'You', mine: true, size: 1, rate: 35, cap: 200, x: 36, y: 40, area: 'Sector 50', rating: 0, reviews: 0, access: 'White gate. Remote in the letterbox.', addr: 'A-9, Sector 50, Noida', days: all, from: 0, to: 24, blocks: [], emoji: '🏡' },
+  ];
+  const bookings = [
+    { id: 101, spaceId: 7, driver: 'Karan M.', plate: 'UP16 AB 1234', start: t0 + 6 * 24 * H + 9 * H, end: t0 + 6 * 24 * H + 13 * H, base: 140, status: 'confirmed', dispute: false, overstays: 0, mine: false },
+    { id: 102, spaceId: 7, driver: 'Pooja R.', plate: 'DL3C CD 5678', start: t0 - 3 * 24 * H + 10 * H, end: t0 - 3 * 24 * H + 15 * H, base: 175, status: 'confirmed', dispute: false, overstays: 0, mine: false },
+    { id: 103, spaceId: 7, driver: 'Vikram T.', plate: 'UP14 EF 9012', start: t0 - 1 * 24 * H + 8 * H, end: t0 - 1 * 24 * H + 12 * H, base: 140, status: 'confirmed', dispute: true, overstays: 0, mine: false },
+    { id: 104, spaceId: 7, driver: 'Sana A.', plate: 'HR26 GH 3456', start: t0 - 10 * 24 * H + 9 * H, end: t0 - 10 * 24 * H + 18 * H, base: 200, status: 'confirmed', dispute: false, overstays: 0, mine: false },
+    { id: 105, spaceId: 1, driver: 'Other Driver', plate: 'UP16 ZZ 0001', start: t0 + 1 * 24 * H + 9 * H, end: t0 + 1 * 24 * H + 17 * H, base: 250, status: 'confirmed', dispute: false, overstays: 0, mine: false },
+    { id: 106, spaceId: 3, driver: 'Other Driver', plate: 'UP16 ZZ 0002', start: t0 + 1 * 24 * H + 10 * H, end: t0 + 1 * 24 * H + 14 * H, base: 200, status: 'confirmed', dispute: false, overstays: 0, mine: false },
+  ];
+  return { role: 'driver', kyc: false, screen: 'search', hostTab: 'spaces', spaces, bookings, nextId: 200,
+    search: { dest: 's18', start: t0 + 24 * H + 10 * H, end: t0 + 24 * H + 14 * H, size: 1 },
+    sel: null, draft: null, debt: 0 };
+}
+let S = seed();
+const $ = id => document.getElementById(id);
+const space = id => S.spaces.find(s => s.id === id);
+
+function fees(base) {
+  const fee = base * FEE, gst = fee * GST;
+  return { base, fee, gst, total: base + fee + gst };
+}
+function hostPrice(sp, start, end) {
+  const hrs = Math.ceil((end - start) / H);
+  const days = Math.floor(hrs / 24), rem = hrs % 24;
+  const dayCost = sp.cap ? sp.cap : sp.rate * 24;
+  return days * dayCost + (sp.cap ? Math.min(rem * sp.rate, sp.cap) : rem * sp.rate);
+}
+function isFree(sp, start, end) {
+  if (end <= start) return false;
+  for (let t = start; t < end; t += H) {
+    const d = new Date(t);
+    if (!sp.days.includes(d.getDay())) return false;
+    const h = d.getHours();
+    if (h < sp.from || h >= sp.to) return false;
+  }
+  if (sp.blocks.some(b => start < b + 24 * H && end > b)) return false;
+  return !S.bookings.some(b => b.spaceId === sp.id && b.status === 'confirmed' && start < b.end && end > b.start);
+}
+function dist(sp, dest) {
+  return Math.hypot(sp.x - dest.x, sp.y - dest.y) * 0.05;
+}
+function refundFor(b, now = Date.now()) {
+  const lead = b.start - now;
+  if (b.cancelledBy === 'host') return { pct: 100, amt: b.total, note: 'Host cancelled: full refund incl. fee and GST' };
+  if (lead >= 24 * H) return { pct: 100, amt: b.total, note: '24h+ before start: full refund incl. fee and GST' };
+  if (lead >= H) return { pct: 50, amt: b.base * 0.5, note: '1-24h before start: 50% of Host price. Service fee and GST kept' };
+  return { pct: 0, amt: 0, note: 'Under 1h before start: no refund' };
+}
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function withTotals(b) { return Object.assign(b, fees(b.base)); }
+S.bookings.forEach(withTotals);
+
+function go(screen, extra = {}) { Object.assign(S, { screen }, extra); render(); $('content').scrollTop = 0; }
+
+function render() {
+  $('roleDriver').classList.toggle('on', S.role === 'driver');
+  $('roleHost').classList.toggle('on', S.role === 'host');
+  const nav = S.role === 'driver'
+    ? [['search', '🔍 Search'], ['mine', '🧾 My Bookings']]
+    : [['spaces', '🅿️ Spaces'], ['incoming', '📥 Bookings'], ['payouts', '💰 Payouts'], ['add', '➕ Add']];
+  const cur = S.role === 'driver' ? (['detail', 'checkout', 'confirmed'].includes(S.screen) ? 'search' : S.screen) : S.hostTab;
+  $('nav').innerHTML = nav.map(([k, l]) => `<button class="${k === cur ? 'on' : ''}" data-k="${k}">${l}</button>`).join('');
+  $('nav').querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (S.role === 'driver') go(b.dataset.k); else { S.hostTab = b.dataset.k; S.editing = null; render(); }
+  });
+  $('content').innerHTML = S.role === 'driver' ? driverView() : hostView();
+  bind();
+}
+
+/* ---------- Driver ---------- */
+function driverView() {
+  switch (S.screen) {
+    case 'search': return searchView();
+    case 'detail': return detailView();
+    case 'checkout': return checkoutView();
+    case 'confirmed': return confirmedView();
+    case 'mine': return mineView();
+    case 'alt': return altView();
+  }
+}
+function searchView() {
+  const s = S.search, dest = DESTS[s.dest];
+  const res = S.spaces.filter(sp => sp.size >= s.size && isFree(sp, s.start, s.end))
+    .map(sp => ({ sp, d: dist(sp, dest), price: hostPrice(sp, s.start, s.end) })).sort((a, b) => a.d - b.d);
+  S.lastResults = res;
+  const pins = res.map(r => `<div class="pin ${r.sp.mine ? 'mine' : ''}" style="left:${r.sp.x}%;top:${r.sp.y}%" data-open="${r.sp.id}">${money(fees(r.price).total)}</div>`).join('');
+  return `
+    ${S.debt > 0 ? `<div class="card" style="border:1px solid var(--bad)"><b style="color:var(--bad)">Outstanding Overstay charge: ${money(S.debt)}</b><div class="muted small">New bookings are blocked until you pay.</div><button class="btn sm bad" data-act="paydebt">Pay now</button></div>` : ''}
+    <div class="card">
+      <label>Where are you going?</label>
+      <select id="dest">${Object.entries(DESTS).map(([k, v]) => `<option value="${k}" ${k === s.dest ? 'selected' : ''}>${v.name}</option>`).join('')}</select>
+      <div class="row"><div style="flex:1"><label>Arrive</label><input type="datetime-local" id="start" value="${toLocalInput(s.start)}"></div></div>
+      <div class="row"><div style="flex:1"><label>Leave</label><input type="datetime-local" id="end" value="${toLocalInput(s.end)}"></div></div>
+      <label>Vehicle</label>
+      <select id="size">${SIZE.map((z, i) => `<option value="${i}" ${i === s.size ? 'selected' : ''}>${z}</option>`).join('')}</select>
+      <div class="muted small" id="serr" style="margin-top:6px"></div>
+    </div>
+    <div class="map"><div class="pin dest" style="left:${dest.x}%;top:${dest.y}%">📍 ${dest.name}</div>${pins}</div>
+    <div class="row" style="margin-bottom:8px"><b>${res.length} Space${res.length === 1 ? '' : 's'} free</b><span class="muted small">Stays: 1h to 7 days</span></div>
+    ${res.length ? res.map(r => spaceCard(r)).join('') : '<div class="card muted">Nothing free for that whole window. Try other times or a bigger area.</div>'}`;
+}
+function spaceCard(r) {
+  const sp = r.sp, g = GRAD[sp.id % GRAD.length];
+  return `<div class="card" data-open="${sp.id}" style="cursor:pointer">
+    <div class="photo" style="background:${g}">${sp.emoji}</div>
+    <div class="row"><b>${sp.name}</b><b>${money(fees(r.price).total)}</b></div>
+    <div class="row muted"><span>${sp.area} · ${r.d.toFixed(1)} km away</span><span>all-in</span></div>
+    <div style="margin-top:6px"><span class="tag">${sp.type}</span> <span class="tag">max ${SIZE[sp.size]}</span> ${sp.rating ? `<span class="tag ok">★ ${sp.rating} (${sp.reviews})</span>` : '<span class="tag warn">New</span>'}</div>
+  </div>`;
+}
+function currentQuote() {
+  const sp = space(S.sel), s = S.search;
+  return { sp, ...fees(hostPrice(sp, s.start, s.end)) };
+}
+function detailView() {
+  const q = currentQuote(), sp = q.sp, s = S.search;
+  const hrs = Math.ceil((s.end - s.start) / H);
+  return `<button class="btn sec sm" data-act="back">← Results</button>
+    <div class="card" style="margin-top:10px">
+      <div class="photo" style="background:${GRAD[sp.id % GRAD.length]}">${sp.emoji}</div>
+      <b style="font-size:17px">${sp.name}</b>
+      <div class="muted">${sp.area} · Hosted by ${sp.host}</div>
+      <div style="margin:6px 0"><span class="tag">${sp.type}</span> <span class="tag">max ${SIZE[sp.size]}</span></div>
+      <div class="muted small">Rate ${money(sp.rate)}/hr, daily cap ${money(sp.cap)}. Exact address and access notes unlock after you book.</div>
+      <div class="secret muted small">🔒 Address and access notes hidden until confirmed</div>
+    </div>
+    <div class="card">
+      <b>Your price</b>
+      <div class="muted small">${fmt(s.start)} → ${fmt(s.end)} (${hrs}h)</div>
+      <div class="line"><span>Host price</span><span>${money(q.base)}</span></div>
+      <div class="line"><span>Service fee (12%)</span><span>${money(q.fee)}</span></div>
+      <div class="line"><span>GST (18% on fee)</span><span>${money(q.gst)}</span></div>
+      <div class="line total"><span>Total</span><span>${money(q.total)}</span></div>
+    </div>
+    <div class="card small muted"><b>Cancellation:</b> 100% refund 24h+ before start, 50% of Host price from 24h to 1h before, none after. Host cancellations always refund in full. You park at your own risk.</div>
+    <button class="btn" data-act="tocheckout">Book instantly</button>`;
+}
+function checkoutView() {
+  const q = currentQuote();
+  return `<button class="btn sec sm" data-act="backdetail">← Back</button>
+    <div class="card" style="margin-top:10px"><b>${q.sp.name}</b><div class="muted small">${fmt(S.search.start)} → ${fmt(S.search.end)}</div>
+      <label>Number plate</label><input id="plate" placeholder="e.g. UP16 AB 1234" value="UP16 XY 4321">
+      <label>Pay with</label>
+      <select id="pay"><option>UPI (GPay, PhonePe, Paytm)</option><option>Credit / debit card</option></select>
+      <div class="muted small" style="margin-top:8px">Your UPI autopay or card is saved to cover any Overstay.</div>
+    </div>
+    <div class="card"><div class="line total"><span>Pay now</span><span>${money(q.total)}</span></div></div>
+    ${S.debt > 0 ? '<div class="card" style="border:1px solid var(--bad)">Booking blocked: clear your Overstay charge first.</div>' : ''}
+    <button class="btn" data-act="pay" ${S.debt > 0 ? 'disabled' : ''}>Pay ${money(q.total)}</button>`;
+}
+function confirmedView() {
+  const b = S.bookings.find(x => x.id === S.lastBooking), sp = space(b.spaceId);
+  return `<div class="card" style="text-align:center"><div style="font-size:40px">✅</div><b style="font-size:18px">Booking confirmed</b>
+      <div class="muted">${fmt(b.start)} → ${fmt(b.end)}</div></div>
+    <div class="card"><b>${sp.name}</b>
+      <div class="secret"><b>📍 ${sp.addr}</b><div class="small" style="margin-top:4px">${sp.access}</div></div>
+      <div class="muted small" style="margin-top:8px">Vehicle plate shared with Host: <b>${b.plate}</b></div></div>
+    <div class="card small muted">We'll remind you before your Booking ends. Staying longer is charged at 1.5x the hourly rate.</div>
+    <button class="btn" data-act="tomine">View My Bookings</button>`;
+}
+function mineView() {
+  const mine = S.bookings.filter(b => b.mine).sort((a, b) => b.start - a.start);
+  if (!mine.length) return '<div class="card muted">No Bookings yet. Search for a Space to get started.</div>';
+  return mine.map(b => {
+    const sp = space(b.spaceId), now = Date.now(), over = b.end < now;
+    const status = b.status === 'cancelled' ? `<span class="tag bad">Cancelled · refunded ${money(b.refund)}</span>` : b.dispute ? '<span class="tag warn">Dispute open</span>' : over ? '<span class="tag">Completed</span>' : '<span class="tag ok">Confirmed</span>';
+    const r = refundFor(b);
+    return `<div class="card"><div class="row"><b>${sp.name}</b>${status}</div>
+      <div class="muted small">${fmt(b.start)} → ${fmt(b.end)} · ${b.plate}</div>
+      <div class="line"><span>Paid</span><span>${money(b.total)}</span></div>
+      ${b.overstays ? `<div class="muted small">Overstays charged: ${b.overstays}</div>` : ''}
+      ${b.status === 'confirmed' ? `<div class="secret small">📍 ${sp.addr}<br>${sp.access}</div>` : ''}
+      ${b.status === 'confirmed' && !over ? `<div class="muted small" style="margin-top:6px">If cancelled now: <b>${r.pct}%</b> (${money(r.amt)}). ${r.note}.</div>
+        <button class="btn sm bad" data-cancel="${b.id}">Cancel Booking</button>
+        <button class="btn sm sec" data-blocked="${b.id}">Space is blocked</button>
+        <button class="btn sm sec" data-overstay="${b.id}">Simulate Overstay</button>` : ''}
+      ${b.status === 'confirmed' && over && !b.rated ? `<button class="btn sm sec" data-rate="${b.id}">Rate ★★★★★</button>` : ''}
+    </div>`;
+  }).join('');
+}
+function altView() {
+  const b = S.bookings.find(x => x.id === S.lastBooking), dest = space(b.spaceId);
+  const alts = S.spaces.filter(sp => sp.id !== dest.id && sp.size >= S.search.size && isFree(sp, b.start, b.end))
+    .map(sp => ({ sp, d: Math.hypot(sp.x - dest.x, sp.y - dest.y) * 0.05, price: hostPrice(sp, b.start, b.end) })).sort((a, c) => a.d - c.d);
+  S.search.start = b.start; S.search.end = b.end;
+  return `<div class="card"><b>Sorry about that.</b><div class="muted small">You're fully refunded (${money(b.refund)}). The Host and our team have been notified.</div></div>
+    <b>Nearby alternatives for the same time</b><div style="height:8px"></div>
+    ${alts.length ? alts.map(r => spaceCard(r)).join('') : '<div class="card muted">No alternatives free for that window.</div>'}`;
+}
+
+/* ---------- Host ---------- */
+function hostView() {
+  if (!S.kyc && S.hostTab !== 'payouts') return kycView();
+  switch (S.hostTab) {
+    case 'spaces': return S.editing ? editView() : spacesView();
+    case 'incoming': return incomingView();
+    case 'payouts': return payoutsView();
+    case 'add': return addView();
+  }
+}
+function kycView() {
+  return `<div class="card"><b>Complete KYC to publish Spaces</b>
+    <div class="muted small">Required once, before your first Space goes live.</div>
+    <label>PAN</label><input id="pan" value="ABCDE1234F">
+    <label>Bank account</label><input id="bank" value="XXXXXX4521 (HDFC)">
+    <label>IFSC</label><input id="ifsc" value="HDFC0001234">
+    <button class="btn" data-act="kyc">Submit KYC</button></div>`;
+}
+function spacesView() {
+  const mine = S.spaces.filter(s => s.mine);
+  return `<div class="card"><span class="tag ok">KYC verified</span></div>` + mine.map(sp => `
+    <div class="card"><div class="photo" style="background:${GRAD[sp.id % GRAD.length]}">${sp.emoji}</div>
+      <div class="row"><b>${sp.name}</b><b>${money(sp.rate)}/hr</b></div>
+      <div class="muted small">${sp.addr} · max ${SIZE[sp.size]} · cap ${money(sp.cap)}/day</div>
+      <div class="muted small">Open: ${sp.days.length === 7 ? 'Every day' : sp.days.map(d => 'SMTWTFS'[d]).join(' ')} · ${sp.from}:00-${sp.to}:00</div>
+      <button class="btn sm" data-edit="${sp.id}">Edit schedule</button></div>`).join('');
+}
+function editView() {
+  const sp = space(S.editing), dn = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  return `<button class="btn sec sm" data-act="closeedit">← Back</button>
+    <div class="card" style="margin-top:10px"><b>${sp.name}</b>
+      <label>Weekly schedule</label>
+      <div class="days">${dn.map((d, i) => `<button class="${sp.days.includes(i) ? 'on' : ''}" data-day="${i}">${d}</button>`).join('')}</div>
+      <div class="row"><div style="flex:1"><label>From (hour)</label><input type="number" min="0" max="23" id="from" value="${sp.from}"></div>
+      <div style="flex:1"><label>To (hour)</label><input type="number" min="1" max="24" id="to" value="${sp.to}"></div></div>
+      <label>Hourly rate (₹)</label><input type="number" id="rate" value="${sp.rate}">
+      <label>Daily cap (₹)</label><input type="number" id="cap" value="${sp.cap}">
+      <button class="btn" data-act="saveedit">Save</button></div>
+    <div class="card"><b>Block a date</b><input type="date" id="blockDate">
+      <button class="btn sec sm" data-act="addblock">Block date</button>
+      <div class="muted small" style="margin-top:6px">${sp.blocks.length ? sp.blocks.map(b => new Date(b).toDateString()).join(', ') : 'No blocked dates'}</div></div>`;
+}
+function incomingView() {
+  const list = S.bookings.filter(b => space(b.spaceId).mine && b.status === 'confirmed').sort((a, b) => b.start - a.start);
+  if (!list.length) return '<div class="card muted">No Bookings yet.</div>';
+  return list.map(b => {
+    const now = Date.now(), live = b.start <= now && b.end >= now, over = b.end < now;
+    return `<div class="card"><div class="row"><b>${b.driver}</b>${b.dispute ? '<span class="tag warn">Dispute</span>' : over ? '<span class="tag">Done</span>' : live ? '<span class="tag ok">Now</span>' : '<span class="tag">Upcoming</span>'}</div>
+      <div class="muted small">${fmt(b.start)} → ${fmt(b.end)}</div>
+      <div class="line"><span>Number plate</span><b>${b.plate}</b></div>
+      <div class="line"><span>You earn</span><b>${money(b.base)}</b></div>
+      ${b.overstayReported ? '<span class="tag bad">Overstay reported</span>' : `<button class="btn sm sec" data-hreport="${b.id}">Report Overstay (photo)</button>`}
+      ${!over ? `<button class="btn sm bad" data-hcancel="${b.id}">Cancel (Driver refunded in full)</button>` : ''}</div>`;
+  }).join('');
+}
+function payoutsView() {
+  const now = Date.now();
+  const list = S.bookings.filter(b => space(b.spaceId).mine && b.status === 'confirmed');
+  let paid = 0, pend = 0, held = 0;
+  const rows = list.sort((a, b) => b.end - a.end).map(b => {
+    let st, cls;
+    if (b.dispute) { st = 'Held (dispute)'; cls = 'bad'; held += b.base; }
+    else if (b.end + 24 * H <= now) { st = 'Paid'; cls = 'ok'; paid += b.base; }
+    else { st = 'Releases ' + fmt(b.end + 24 * H); cls = 'warn'; pend += b.base; }
+    return `<div class="card"><div class="row"><b>${money(b.base)}</b><span class="tag ${cls}">${st}</span></div><div class="muted small">${b.driver} · ${fmt(b.start)}</div>
+      ${b.dispute ? `<button class="btn sm sec" data-resolve="${b.id}">Admin: resolve dispute</button>` : ''}</div>`;
+  }).join('');
+  return `<div class="card"><div class="line"><span>Paid out</span><b style="color:var(--ok)">${money(paid)}</b></div>
+    <div class="line"><span>Pending (24h after end)</span><b>${money(pend)}</b></div>
+    <div class="line"><span>Held for dispute</span><b style="color:var(--bad)">${money(held)}</b></div></div>${rows || ''}
+    ${!S.kyc ? '<div class="card warn small muted">Complete KYC (Spaces tab) before publishing.</div>' : ''}`;
+}
+function addView() {
+  return `<div class="card"><b>List a new Space</b>
+    <label>Name</label><input id="n_name" value="Spare bay, Sector 50">
+    <label>Type</label><select id="n_type"><option>Driveway</option><option>Garage</option><option>Business bay</option><option>Carport</option></select>
+    <label>Max vehicle size</label><select id="n_size">${SIZE.map((z, i) => `<option value="${i}" ${i === 1 ? 'selected' : ''}>${z}</option>`).join('')}</select>
+    <div class="row"><div style="flex:1"><label>Hourly (₹)</label><input type="number" id="n_rate" value="30"></div>
+    <div style="flex:1"><label>Daily cap (₹)</label><input type="number" id="n_cap" value="180"></div></div>
+    <label>Address (hidden until booked)</label><input id="n_addr" value="A-9, Sector 50, Noida">
+    <label>Access notes</label><textarea id="n_acc" rows="2">Park behind the white gate.</textarea>
+    <label style="display:flex;gap:8px;align-items:flex-start;color:#0f172a"><input type="checkbox" id="n_att" style="width:auto;margin-top:3px"> I confirm I have the right to rent out this Space (ownership, lease permission or society approval).</label>
+    <button class="btn" data-act="addspace">Publish Space</button></div>`;
+}
+
+/* ---------- Events ---------- */
+function bind() {
+  const c = $('content'), q = sel => c.querySelectorAll(sel), on = (sel, f) => q(sel).forEach(e => e.onclick = ev => { ev.stopPropagation(); f(e, ev); });
+  const read = () => {
+    const d = $('dest'); if (!d) return;
+    S.search.dest = d.value; S.search.size = +$('size').value;
+    S.search.start = new Date($('start').value).getTime(); S.search.end = new Date($('end').value).getTime();
+  };
+  ['dest', 'start', 'end', 'size'].forEach(id => { const e = $(id); if (e) e.onchange = () => {
+    read();
+    const len = (S.search.end - S.search.start) / H;
+    if (isNaN(len) || len < 1) { $('serr').textContent = 'Stay must be at least 1 hour.'; return; }
+    if (len > 168) { $('serr').textContent = 'Maximum stay is 7 days.'; return; }
+    render();
+  }; });
+  on('[data-open]', e => go('detail', { sel: +e.dataset.open }));
+  on('[data-act]', e => actions[e.dataset.act] && actions[e.dataset.act]());
+  on('[data-cancel]', e => {
+    const b = S.bookings.find(x => x.id === +e.dataset.cancel), r = refundFor(b);
+    b.status = 'cancelled'; b.refund = r.amt; toast(`Cancelled. Refund ${money(r.amt)} (${r.pct}%)`); render();
+  });
+  on('[data-blocked]', e => {
+    const b = S.bookings.find(x => x.id === +e.dataset.blocked);
+    b.status = 'cancelled'; b.refund = b.total; b.dispute = true; S.lastBooking = b.id;
+    toast('Reported. Full refund issued and Admin notified.'); go('alt');
+  });
+  on('[data-overstay]', e => {
+    const b = S.bookings.find(x => x.id === +e.dataset.overstay), sp = space(b.spaceId);
+    const charge = sp.rate * 1.5; b.overstays++;
+    if (b.overstays >= 2) { S.debt += charge; toast(`Autopay failed. ${money(charge)} recorded as debt. New bookings blocked.`); }
+    else toast(`Overstay: ${money(charge)} charged to your saved UPI (1.5x rate)`);
+    render();
+  });
+  on('[data-rate]', e => { S.bookings.find(x => x.id === +e.dataset.rate).rated = true; toast('Thanks for rating!'); render(); });
+  on('[data-edit]', e => { S.editing = +e.dataset.edit; render(); });
+  on('[data-day]', e => {
+    const sp = space(S.editing), d = +e.dataset.day;
+    sp.days = sp.days.includes(d) ? sp.days.filter(x => x !== d) : [...sp.days, d].sort(); render();
+  });
+  on('[data-hreport]', e => {
+    const b = S.bookings.find(x => x.id === +e.dataset.hreport); b.overstayReported = true;
+    toast('Reported with photo. We will contact the Driver. 3 confirmed Overstays suspend an account.'); render();
+  });
+  on('[data-hcancel]', e => {
+    const b = S.bookings.find(x => x.id === +e.dataset.hcancel); b.status = 'cancelled'; b.cancelledBy = 'host'; b.refund = b.total;
+    toast('Cancelled. Driver refunded in full.'); render();
+  });
+  on('[data-resolve]', e => { S.bookings.find(x => x.id === +e.dataset.resolve).dispute = false; toast('Dispute resolved. Payout will release.'); render(); });
+}
+const actions = {
+  back: () => go('search'),
+  backdetail: () => go('detail'),
+  tocheckout: () => go('checkout'),
+  tomine: () => go('mine'),
+  paydebt: () => { S.debt = 0; toast('Debt cleared. You can book again.'); render(); },
+  pay: () => {
+    const plate = $('plate').value.trim();
+    if (plate.length < 6) return toast('Enter a valid number plate');
+    const q = currentQuote(), s = S.search;
+    if (!isFree(q.sp, s.start, s.end)) return toast('Sorry, that window was just taken');
+    const b = withTotals({ id: S.nextId++, spaceId: q.sp.id, driver: 'You', mine: true, plate, start: s.start, end: s.end, base: q.base, status: 'confirmed', dispute: false, overstays: 0 });
+    S.bookings.push(b); S.lastBooking = b.id; toast('Payment successful via UPI'); go('confirmed');
+  },
+  kyc: () => { S.kyc = true; toast('KYC verified'); render(); },
+  closeedit: () => { S.editing = null; render(); },
+  saveedit: () => {
+    const sp = space(S.editing);
+    sp.from = +$('from').value; sp.to = +$('to').value; sp.rate = +$('rate').value; sp.cap = +$('cap').value;
+    if (sp.to <= sp.from) return toast('End hour must be after start hour');
+    toast('Schedule saved'); S.editing = null; render();
+  },
+  addblock: () => {
+    const v = $('blockDate').value; if (!v) return toast('Pick a date');
+    const d = new Date(v); d.setHours(0, 0, 0, 0); space(S.editing).blocks.push(d.getTime()); toast('Date blocked'); render();
+  },
+  addspace: () => {
+    if (!$('n_att').checked) return toast('Please confirm your right to rent out this Space');
+    S.spaces.push({ id: S.nextId++, name: $('n_name').value, type: $('n_type').value, host: 'You', mine: true, size: +$('n_size').value, rate: +$('n_rate').value, cap: +$('n_cap').value,
+      x: 40, y: 45, area: 'Sector 50', rating: 0, reviews: 0, access: $('n_acc').value, addr: $('n_addr').value, days: [0, 1, 2, 3, 4, 5, 6], from: 0, to: 24, blocks: [], emoji: '🅿️' });
+    toast('Space published'); S.hostTab = 'spaces'; render();
+  },
+};
+$('roleDriver').onclick = () => { S.role = 'driver'; S.screen = 'search'; render(); };
+$('roleHost').onclick = () => { S.role = 'host'; S.hostTab = S.kyc ? 'spaces' : 'spaces'; S.editing = null; render(); };
+$('reset').onclick = () => { S = seed(); S.bookings.forEach(withTotals); render(); toast('Demo reset'); };
+render();
+</script>
+</body>
+</html>
